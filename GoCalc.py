@@ -2,7 +2,7 @@
 
 from exceptions import IndexError
 from random import randint
-import pickle
+import cPickle as pic
 
 BLACK = 1
 WHITE = 2
@@ -138,11 +138,11 @@ class Session (object):
 
     def save(self, filename):
         with open(filename, 'w') as f:
-            pickle.dump(self, f)
+            pic.dump(self, f)
 
     @staticmethod
     def load(filename):
-        return pickle.load(open(filename))
+        return pic.load(open(filename))
 
     def makeMove(self, x, y, color):
         self.current = self.last = self.current.makeMove( x, y, color)
@@ -172,20 +172,27 @@ class Session (object):
 if __name__ == '__main__':
 
     def testSave():
-        s = Session(9)
-        s.makeMove(1, 1, BLACK)
-        s.makeMove(1, 2, WHITE)
-        s.makeMove(2, 2, WHITE)
-        s.makeMove(2, 1, WHITE)
+        s = Session(19)
+        for n in xrange(0, 300):
+            try:
+                s.makeMove( randint(0,19), randint(0,19), BLACK)
+            except:
+                pass
+
+            try:
+                s.makeMove( randint(0,19), randint(0,19), WHITE)
+            except:
+                pass
+        
         print s.current
         s.save('session.save')
 
     def testLoad():
         s = Session.load('session.save')
         print s.current
-        s.undo()
-        print s.current
+        print s.current.turn
 
+    testSave()
     testLoad()
 
 
