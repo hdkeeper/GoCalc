@@ -7,20 +7,43 @@ BLACK = 1
 WHITE = 2
 
 
+class Place (object):
+    color = None
+    group = None
+    turn = None
+
+    def __init__(self, color, turn):
+        self.color = color
+        self.turn = turn
+
+    def __str__(self):
+        return ' '+{None:'.', BLACK:'X', WHITE:'O'}[self.color]
+
+
+class Group (object):
+
+    def __init__(self, color):
+        self.color = color
+        self.stoneCount = 0
+        self.dameCount = None
+        self.stoneCoords = set()
+        self.dameCoords = set()
+
+    def __str__(self):
+        return ', '.join(str(p) for p in self.stoneCoords)
+
+
 class Board (object):
-    emptyPlace = None
+    emptyPlace = Place( None, None)
 
     def __init__(self, **kwargs):
         self.size = 0
         self.turn = 0
         self.places = {}
         self.groups = []
-        self.emptyPlace = None
         self.prevBoard = None
         self.nextBoards = []
-
-        if Board.emptyPlace is None:
-            Board.emptyPlace = Place( None, None)
+        self.lastMove = None
 
         if 'size' in kwargs:
             self.size = kwargs['size']
@@ -42,7 +65,7 @@ class Board (object):
             for x in range(1, self.size+1))
                     
     def makeMove(self, x, y, color):
-        if x > self.size or y > self.size:
+        if x < 1 or y < 1 or x > self.size or y > self.size:
             raise IndexError('Offset %d, %d is out of range' % (x, y))
 
         if self.places[(x,y)].color is not None:
@@ -54,22 +77,21 @@ class Board (object):
 
     def _putStone(self, x, y, color):
         self.places[(x,y)] = Place(color, self.turn)
+        self.lastMove = (x, y)
         self._findGroups()
         self._countDame()
         self._removeDeadGroups()
 
     def _getAdjacentPositions(self, pos):
-        result = []
         x, y = pos
         if x > 1:
-            result.append((x-1, y))
+            yield (x-1, y)
         if y > 1:
-            result.append((x, y-1))
+            yield (x, y-1)
         if x < self.size:
-            result.append((x+1, y))
+            yield (x+1, y)
         if y < self.size:
-            result.append((x, y+1))
-        return result
+            yield (x, y+1)
         
     def _findGroups(self):
         def addPosToGroup(pos, group):
@@ -101,9 +123,9 @@ class Board (object):
             if group.dameCount == 0:
                 for pos in group.stoneCoords:
                     self.places[pos] = Board.emptyPlace
-                self.groups.remove(group)
-                recount = False
+                recount = True
 
+        self.groups = [g for g in self.groups if g.dameCount > 0]
         if recount:
             self._countDame()
 
@@ -112,38 +134,13 @@ class Board (object):
 
 
 
-class Place (object):
-    color = None
-    group = None
-    turn = None
-
-    def __init__(self, color, turn):
-        self.color = color
-        self.turn = turn
-
-    def __str__(self):
-        return ' '+{None:'.', BLACK:'X', WHITE:'O'}[self.color]
-
-
-class Group (object):
-
-    def __init__(self, color):
-        self.color = color
-        self.stoneCount = 0
-        self.dameCount = None
-        self.stoneCoords = set()
-        self.dameCoords = set()
-
-    def __str__(self):
-        return ', '.join([ str(p) for p in self.stoneCoords])
 
 
 if __name__ == '__main__':
-    first = Board( size=10)
-    last = first.makeMove(1, 1, BLACK).makeMove(1, 2, WHITE).makeMove(2, 1, WHITE)
+    first = Board( size=9)
+    last = first.makeMove(1, 1, BLACK).makeMove(1, 2, WHITE).makeMove(2, 2, WHITE).makeMove(2, 1, WHITE)
 
     print last
-
 
 
 
